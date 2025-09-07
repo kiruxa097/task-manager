@@ -1,7 +1,7 @@
 import json
 
 '''
-Попытка открытия файла с форматом json, при ошибке, (т.е при его отсутствии) ->
+Попытка открыть файла с форматом json, при ошибке, (т.е при его отсутствии) ->
 -> создать новый файл с форматом json, если же файл есть, то присвоить переменной file содержимое json 
 '''
 
@@ -14,7 +14,7 @@ except FileNotFoundError:
         json.dump(r, f, ensure_ascii=False, indent=2)
         file = r
 
-# Аналогично верхнему try/except
+# Аналогично верхнему try/except только работает с архивом
 try:
     with open("ArchiveTasks.json", "r", encoding="UTF8") as f1:
         file_archive = json.load(f1)
