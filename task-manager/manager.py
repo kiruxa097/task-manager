@@ -1,7 +1,7 @@
 import json
 
 '''
-Попытка открыть файла с форматом json, при ошибке, (т.е при его отсутствии) ->
+Попытка открытия файла с форматом json, при ошибке, (т.е при его отсутствии) ->
 -> создать новый файл с форматом json, если же файл есть, то присвоить переменной file содержимое json 
 '''
 
@@ -14,7 +14,7 @@ except FileNotFoundError:
         json.dump(r, f, ensure_ascii=False, indent=2)
         file = r
 
-# Аналогично верхнему try/except только с архивом
+# Аналогично верхнему try/except
 try:
     with open("ArchiveTasks.json", "r", encoding="UTF8") as f1:
         file_archive = json.load(f1)
@@ -42,17 +42,6 @@ class User():
 
 #  класс, который обрабатывает задание и его суть, а также меняет его статус
 class Task():
-    def __init__(self, user, title, description, assignee = ""):
-        self.title = title
-        self.description = description
-        self.status = "Требует выполнения"
-        self.assignee = assignee
-        for peop in file["users"]:
-            if peop["name"] == user.name:
-                peop["tasks"][self.title] = self.description
-                with open("TaskManager.json", "w", encoding="UTF8") as t_task:
-                    json.dump(file, t_task, ensure_ascii=False, indent=2)
-
     # функция, которая добавляет выполненные задачи в архив, а также ловит ошибки при отсутсвии такого задания
     def done(self, user):
         try:
@@ -67,15 +56,9 @@ class Task():
                     with open("TaskManager.json", "w", encoding="UTF8") as task:
                         json.dump(file, task, ensure_ascii=False, indent=2)
         except KeyError:
-            print("Такое значение отсутствует!")
+            print("Такая задача отсутствует!")
         finally:
-            print(f"Задание {self.title} успешно выполнено!")
-    def __repr__(self):
-        if not self.assignee:
-            return f"Задание: '{self.title}' - [{self.status}]. Исполнитель: не назначен."
-        else:
-            name_person = self.assignee.name if isinstance(self.assignee, User) else str(self.assignee)
-            return f"Задание: '{self.title}' - [{self.status}]. Исполнитель: {name_person}."
+            print(f"Задача {self.title} успешно выполнена!")
 
 # декоратор для проверки прав администратора
 def check_admin(func):
@@ -87,26 +70,39 @@ def check_admin(func):
     return admin
 
 # класс, который хранит, добавляет и назначает задачи
-# в последнем обновлении этот класс не менялся, через несколько дней все задачи будут добавляться в файл json
 class TaskManager():
-    def __init__(self):
-        self.tasks = []
+    # добавить задачу
+    def __init__(self, user, title, description):
+        self.title = title
+        self.description = description
+        self.status = "Требует выполнения"
+        for peop in file["users"]:
+            if peop["name"] == user.name:
+                peop["tasks"][self.title] = self.description
+                with open("TaskManager.json", "w", encoding="UTF8") as t_task:
+                    json.dump(file, t_task, ensure_ascii=False, indent=2)
+        print(f"Задача '{self.title}' - [{self.description}] добавлена. Исполнитель: {user.name}.")
 
     @check_admin
-    # добавить задачу
-    def add_task(self, user, task):
-        self.tasks.append(task)
-        print(f"Задача {task.title} добавлена.")
-
     # назначить задачу
-    def assign_task(self, task, user):
-        task.assignee = user
-        print(f"Задача '{task.title}' назначена на {user.name}")
+    def assign_task(self, user, executor, person):
+        print(f"Задача {self.title} исполнителя: {executor}, теперь назначена на {person}")
+        for u in file["users"]:
+            if u["name"] == executor:
+                del u["tasks"][self.title]
+        for u in file["users"]:
+            if u["name"] == person:
+                u["tasks"][self.title] = self.description
+        with open("TaskManager.json", "w", encoding="UTF8") as f:
+            json.dump(file, f, ensure_ascii=False, indent=2)
 
+    @check_admin
     # показать текущий список задач
-    def show_tasks(self):
-        if not self.tasks:
-            print("Задач нет.")
-            return
-        for task in self.tasks:
-            print(task)
+    def show_tasks(self, user, person):
+        print(f"Задачи у пользователя '{person}': ")
+        with open("TaskManager.json", "r", encoding="UTF8") as f:
+            data = json.load(f)
+            for i in data["users"]:
+                if i["name"] == person:
+                    print(i["tasks"])
+                    
